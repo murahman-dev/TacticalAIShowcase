@@ -28,6 +28,9 @@ public:
 	// Expose perception component for external systems (debug, bahavior tree, etc.)
 	UAIPerceptionComponent* GetPerception() const { return PerceptionComp; }
 
+	// Setup affiliation
+	virtual FGenericTeamId GetGenericTeamId() const override;
+
 protected:
 	// Called when this controller takes possession of a pawn (enemy character)
 	virtual void OnPossess(APawn* InPawn) override;

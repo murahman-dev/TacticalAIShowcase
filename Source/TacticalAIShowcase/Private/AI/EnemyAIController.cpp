@@ -36,6 +36,12 @@ AEnemyAIController::AEnemyAIController(const FObjectInitializer& Init) : Super(I
 	PerceptionComp->SetDominantSense(UAISense_Sight::StaticClass());
 }
 
+FGenericTeamId AEnemyAIController::GetGenericTeamId() const
+{
+	// Team 1 = enemy. Player is team 0. 255 is neutral.
+	return FGenericTeamId(1);
+}
+
 void AEnemyAIController::ApplyConfiguredSenseValues()
 {
 	// Ensure configurations are valid before applying values
@@ -85,6 +91,7 @@ void AEnemyAIController::OnUnPossess()
 
 void AEnemyAIController::OnTargetSensed(AActor* Actor, FAIStimulus Stim)
 {
+	UE_LOG(LogTemp, Display, TEXT("Sensed : %s, Sense : %d, Sense Status : %d"), *Actor->GetName(), Stim.Type.Index, Stim.WasSuccessfullySensed());
 	// Ignore invalid actors
 	if (!Actor) return;
 	
