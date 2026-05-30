@@ -25,10 +25,16 @@ public:
 	// Setup perception components and default configurations
 	AEnemyAIController(const FObjectInitializer& Init);
 
-	// Expose perception component for external systems (debug, bahavior tree, etc.)
+	/*
+	* Exposes the perception component for external systems
+	* Useful for debugging, behavior tree queries, or environment queries
+	*/
 	UAIPerceptionComponent* GetPerception() const { return PerceptionComp; }
 
-	// Setup affiliation
+	/*
+	* Returns the team ID for this AI controller
+	* Team 1 = enemy, Team 0 = player, Team 255 = neutral
+	*/
 	virtual FGenericTeamId GetGenericTeamId() const override;
 
 protected:
@@ -79,6 +85,10 @@ protected:
 	void OnTargetSensed(AActor* Actor, FAIStimulus Stim);
 
 private:
-	// Applies the configurable radius/FOV values to sense configs
+	/*
+	* Applies configurable sense values(radius, FOV, age) to each sense config
+	* Called during construction before senses are registered with the perception component
+	* Safe to call only after SightConfig, HearingConfig, and DamageConfig are initialized
+	*/
 	void ApplyConfiguredSenseValues();
 };

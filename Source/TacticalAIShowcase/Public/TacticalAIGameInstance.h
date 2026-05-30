@@ -19,9 +19,9 @@ public:
 	UTacticalAIGameInstance();
 
 protected:
-	// Runs once in Initialization
+	// Registers the global team attitude solver (Friendly/Neutral/Hostile logic)
 	virtual void Init() override;
 
-	// Counterpart to Init, runs at process exit
+	// Counterpart to Init, cleans up states on process exit
 	virtual void Shutdown() override;
 };

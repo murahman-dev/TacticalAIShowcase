@@ -55,13 +55,23 @@ protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
-	// Movement handler (translates 2D input to forward/right movement)
+	/*
+	* Translates 2D input vector into world-space forward/right movement.
+	* Uses controller yaw only to keep movement on the ground plane.
+	* @param Value - 2D axis value (X = strafe, Y = forward)
+	*/
 	void Move(const FInputActionValue& Value);
 
-	// Camera look handler (feeds yaw/pitch into controller rotation)
+	/*
+	* Feeds input axis into controller yaw and pitch rotation.
+	* @param Value - 2D axis value (X = yaw, Y = pitch)
+	*/
 	void Look(const FInputActionValue& Value);
 
-	// Jump handler (triggers ACharacter::Jump)
+	/*
+	* Triggers ACharacter::Jump and reports a noise event for AI hearing tests.
+	* @param Value - Trigger state from the jump input action
+	*/
 	void StartJumping(const FInputActionValue& Value);
 
 public:

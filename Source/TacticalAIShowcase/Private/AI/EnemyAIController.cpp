@@ -91,7 +91,7 @@ void AEnemyAIController::OnUnPossess()
 
 void AEnemyAIController::OnTargetSensed(AActor* Actor, FAIStimulus Stim)
 {
-	UE_LOG(LogTemp, Display, TEXT("Sensed : %s, Sense : %d, Sense Status : %d"), *Actor->GetName(), Stim.Type.Index, Stim.WasSuccessfullySensed());
+	UE_LOG(LogTemp, Display, TEXT("Sensed : %s, Sense : %d, Sense Status : %d"), Actor ? *Actor->GetName() : TEXT("NONE"), Stim.Type.Index, Stim.WasSuccessfullySensed());
 	// Ignore invalid actors
 	if (!Actor) return;
 	

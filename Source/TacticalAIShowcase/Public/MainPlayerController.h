@@ -29,6 +29,6 @@ protected:
 	// BeginPlay
 	virtual void BeginPlay() override;
 
-	// Engine hook to delegate input bindings
+	// Applies all DefaultMappingContexts to the Enhanced Input subsystem for local players
 	virtual void SetupInputComponent() override;
 };
