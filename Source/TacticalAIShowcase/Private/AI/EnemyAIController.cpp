@@ -7,6 +7,8 @@
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Damage.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "AI/BlackboardKeys.h"
+#include "BehaviorTree/BehaviorTree.h"
 
 AEnemyAIController::AEnemyAIController(const FObjectInitializer& Init) : Super(Init)
 {
@@ -71,7 +73,32 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	// Bind perception callback when AI takes control of a pawn
+	// Skip if no BT is assigned 
+	// Controller still runs perception below
+	if (BehaviorTreeAsset)
+	{
+		// GetBlackboardComponent returns null on first possession
+		// UseBlackboard below creates the BB and writes the handle back through the out-param
+		UBlackboardComponent* BB = GetBlackboardComponent();
+
+		if (!BB && BehaviorTreeAsset->BlackboardAsset)
+		{
+			UseBlackboard(BehaviorTreeAsset->BlackboardAsset, BB);
+		}
+
+		// Creates the BehaviorTreeComponent and starts ticking the tree
+		RunBehaviorTree(BehaviorTreeAsset);
+
+		// Seed initial blackboard state from the pawn's spawn pose
+		if (BB)
+		{
+			BB->SetValueAsVector(BBKeys::HomeLocation, InPawn->GetActorLocation());
+			BB->SetValueAsBool(BBKeys::bSeesTarget, false);
+		}
+	}
+
+	// Bind AFTER Super::OnPossess so PerceptionComp is alive
+	// Binding earlier can miss the first stimulus
 	if (PerceptionComp)
 	{
 		PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyAIController::OnTargetSensed);
@@ -109,14 +136,14 @@ void AEnemyAIController::OnTargetSensed(AActor* Actor, FAIStimulus Stim)
 		if (Stim.WasSuccessfullySensed())
 		{
 			// Target is visible
-			BB->SetValueAsObject(TEXT("TargetActor"), Actor);
-			BB->SetValueAsVector(TEXT("LastKnownLocation"), Stim.StimulusLocation);
-			BB->SetValueAsBool(TEXT("bSeesTarget"), true);
+			BB->SetValueAsObject(BBKeys::TargetActor, Actor);
+			BB->SetValueAsVector(BBKeys::LastKnownLocation, Stim.StimulusLocation);
+			BB->SetValueAsBool(BBKeys::bSeesTarget, true);
 		}
 		else
 		{
 			// Lost visual contact
-			BB->SetValueAsBool(TEXT("bSeesTarget"), false);
+			BB->SetValueAsBool(BBKeys::bSeesTarget, false);
 		}
 	}
 
@@ -124,6 +151,6 @@ void AEnemyAIController::OnTargetSensed(AActor* Actor, FAIStimulus Stim)
 	else if (Stim.WasSuccessfullySensed())
 	{
 		// Update last known position from sound/damage
-		BB->SetValueAsVector(TEXT("LastKnownLocation"), Stim.StimulusLocation);
+		BB->SetValueAsVector(BBKeys::LastKnownLocation, Stim.StimulusLocation);
 	}
 }

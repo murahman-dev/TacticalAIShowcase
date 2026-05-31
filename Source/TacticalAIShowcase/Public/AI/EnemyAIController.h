@@ -44,6 +44,10 @@ protected:
 	// Called when this controller loses possession of a pawn
 	virtual void OnUnPossess() override;
 
+	// Behavior tree to run on possess (assigned in BP_MyAIController Class Defaults)
+	UPROPERTY(EditDefaultsOnly, Category = "AI|Behavior")
+	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
+
 	// Core perception component that manages all AI senses
 	UPROPERTY(VisibleAnywhere, Category = "AI|Perception")
 	TObjectPtr<UAIPerceptionComponent> PerceptionComp;
