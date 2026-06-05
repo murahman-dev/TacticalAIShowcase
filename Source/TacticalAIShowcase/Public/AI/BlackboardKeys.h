@@ -28,6 +28,9 @@ namespace BBKeys
 	// Squad role tag: Suppressor, Flanker, Closer (Name key)
 	extern const FName Role;
 
+	// Current state tag: Patrol, Alert, Engage, Flank, Retreat (Name key)
+	extern const FName CurrentState;
+
 	// Nav-valid patrol point chosen by BTTask_PickPatrolPoint (Vector key)
 	extern const FName PatrolDestination;
 
