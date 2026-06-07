@@ -1,5 +1,9 @@
 #include "AI/AITags.h"
 
+/*
+* Definitions for the AITags externs.
+* Strings must match the tag names used in editor assets.
+*/
 namespace AITags
 {
 	UE_DEFINE_GAMEPLAY_TAG(State_Patrol, "AI.State.Patrol");

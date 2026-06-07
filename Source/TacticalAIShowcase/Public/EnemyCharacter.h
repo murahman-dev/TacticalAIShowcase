@@ -15,7 +15,7 @@ class TACTICALAISHOWCASE_API AEnemyCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Default constructor
+	// Constructor
 	AEnemyCharacter();
 
 protected:

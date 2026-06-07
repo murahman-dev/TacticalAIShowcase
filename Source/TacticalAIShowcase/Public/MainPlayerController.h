@@ -18,7 +18,7 @@ class AMainPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	//Constructor
+	// Constructor
 	AMainPlayerController();
 
 protected:

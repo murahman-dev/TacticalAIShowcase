@@ -22,7 +22,7 @@ class TACTICALAISHOWCASE_API AEnemyAIController : public AAIController
 	GENERATED_BODY()
 
 public:
-	// Setup perception components and default configurations
+	// Constructor
 	AEnemyAIController(const FObjectInitializer& Init);
 
 	/*
