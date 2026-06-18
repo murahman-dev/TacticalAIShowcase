@@ -5,8 +5,10 @@
 #include "EnemyCharacter.generated.h"
 
 /*
-* Base enemy character class.
-* Represents AI-controlled enemies in the game world.
+* AI-controlled enemy character. Auto-possessed by AEnemyAIController on spawn or
+* placement.
+* Holds per-instance patrol waypoints and overrides eye view point
+* to return actor rotation directly for perception sight cones.
 */
 
 UCLASS()
@@ -18,7 +20,12 @@ public:
 	// Constructor
 	AEnemyCharacter();
 
+	// Patrol waypoints in actor-local space, traversed in order with wraparound
+	// MakeEditWidget shows draggable handles in the editor viewport
+	// Empty array falls back to random navmesh patrol within PatrolRadius
+	UPROPERTY(EditInstanceOnly, Category = "AI|Patrol", meta = (MakeEditWidget = true))
+	TArray<FVector> PatrolWaypoints;
+
 protected:
-	// Called when the game starts or the actor is spawned
-	virtual void BeginPlay() override;
+	virtual void GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const override;
 };

@@ -6,14 +6,18 @@ AEnemyCharacter::AEnemyCharacter()
 	// Disable ticking unless explicitly needed (AI is event-driven)
 	PrimaryActorTick.bCanEverTick = false;
 
-	// Ensure AI controller is automatically assigned when spawned or placed
+	// Auto-possess on spawn or level placement
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
-	// Set custom AI controller class
+	// Custom controller owns perception, blackboard wiring, and team affiliation
 	AIControllerClass = AEnemyAIController::StaticClass();
 }
 
-void AEnemyCharacter::BeginPlay()
+// Returns actor rotation directly instead of controller rotation
+// Perception uses this for sight, to fix cone-lagging-behind-body when
+// AAIController::Tick (which drives UpdateControlRotation) is disabled
+void AEnemyCharacter::GetActorEyesViewPoint(FVector& OutLocation, FRotator& OutRotation) const
 {
-	Super::BeginPlay();	
+	OutLocation = GetActorLocation() + FVector(0.0f, 0.0f, BaseEyeHeight);
+	OutRotation = GetActorRotation();
 }
