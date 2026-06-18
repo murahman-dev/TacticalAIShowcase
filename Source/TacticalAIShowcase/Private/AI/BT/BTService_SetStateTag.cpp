@@ -8,8 +8,8 @@ UBTService_SetStateTag::UBTService_SetStateTag()
 {
 	NodeName = TEXT("Set State Tag");
 
-	// Notify on subtree enter/exit only 
-	// State needs writing once when the branch activates, 
+	// Notify on subtree enter/exit only
+	// State needs writing once when the branch activates,
 	// not every tick
 	bNotifyBecomeRelevant = true;
 	bNotifyCeaseRelevant = true;

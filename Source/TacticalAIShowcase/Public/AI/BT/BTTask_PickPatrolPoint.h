@@ -5,9 +5,10 @@
 #include "BTTask_PickPatrolPoint.generated.h"
 
 /*
-* Behavior tree task that picks a random navmesh-reachable point within
-* PatrolRadius of the AI's home location and writes it to the
-* PatrolDestination blackboard key.
+* Behavior tree task that writes a patrol destination to BBKeys::PatrolDestination.
+* If the controlled AEnemyCharacter has PatrolWaypoints set, uses the next entry relative
+* to HomeLocation and advances CurrentPatrolIndex with wraparound.
+* Otherwise picks a random navmesh-reachable point within PatrolRadius of HomeLocation.
 */
 UCLASS()
 class TACTICALAISHOWCASE_API UBTTask_PickPatrolPoint : public UBTTaskNode

@@ -9,7 +9,7 @@ void USquadSubsystem::RegisterAlly(APawn* Pawn, FGameplayTag Role)
 		return;
 	}
 
-	// Drop any prior entry for this pawn 
+	// Drop any prior entry for this pawn
 	// So the Add below doesn't create a duplicate
 	Allies.RemoveAll([Pawn](const FAllyInfo& A)
 		{

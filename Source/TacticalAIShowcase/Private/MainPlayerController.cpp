@@ -3,13 +3,6 @@
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
 
-AMainPlayerController::AMainPlayerController() {}
-
-void AMainPlayerController::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
 void AMainPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();

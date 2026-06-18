@@ -7,7 +7,7 @@
 /*
 * Tuner state shared between SAIDebugPanel and AEnemyAIController.
 * Pending* fields written on slider drag, read live by DrawHUD (cone preview).
-* ApplyToAllAI applies them on live AEnemyAIControllers on button click.
+* ApplyToAllAI pushes them into all live AEnemyAIControllers on button click.
 */
 UCLASS()
 class TACTICALAISHOWCASE_API UAIDebugSettings : public UObject

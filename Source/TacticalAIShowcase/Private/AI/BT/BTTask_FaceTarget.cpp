@@ -58,7 +58,7 @@ void UBTTask_FaceTarget::TickTask(UBehaviorTreeComponent& Owner, uint8* NodeMemo
 	FRotator Goal = Current;
 	Goal.Yaw = Look.Yaw;
 
-	// RInterpTo handles the 180-degree yaw seam correctly via 
+	// RInterpTo handles the 180-degree yaw seam correctly via
 	// internal angle normalization
 	const FRotator NewRot = FMath::RInterpTo(Current, Goal, DeltaSeconds, RotateSpeed);
 	AI_Pawn->SetActorRotation(NewRot);

@@ -14,7 +14,7 @@ UCLASS()
 class TACTICALAISHOWCASE_API UBTDecorator_HasAllyEngaged : public UBTDecorator
 {
 	GENERATED_BODY()
-	
+
 public:
 	UBTDecorator_HasAllyEngaged();
 

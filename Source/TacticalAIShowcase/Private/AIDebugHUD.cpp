@@ -65,8 +65,8 @@ void AAIDebugHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	APlayerController* PC = GetOwningPlayerController();
 
-	// Null pointer Guard for
-	// no valid local player or proper world context
+	// Null pointer guard
+	// No valid local player or proper world context
 	if (DebugPanelContainer.IsValid() && GEngine && GEngine->GameViewport && PC && PC->GetLocalPlayer())
 	{
 		GEngine->GameViewport->RemoveViewportWidgetForPlayer(

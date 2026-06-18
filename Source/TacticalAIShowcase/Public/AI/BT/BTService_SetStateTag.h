@@ -7,14 +7,14 @@
 
 /*
 * Writes a gameplay tag into the blackboard's CurrentState key when its
-* subtree becomes the active branch. 
+* subtree becomes the active branch.
 * Lets other systems query what the AI is currently doing.
 */
 UCLASS()
 class TACTICALAISHOWCASE_API UBTService_SetStateTag : public UBTService
 {
 	GENERATED_BODY()
-	
+
 public:
 	// Constructor
 	UBTService_SetStateTag();

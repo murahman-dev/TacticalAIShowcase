@@ -125,7 +125,7 @@ void SAIDebugPanel::Construct(const FArguments& InArgs)
 								]
 
 							// Apply button
-							// Applies the values on live AEnemyAIControllers on button click
+							// Pushes Pending* values into live AEnemyAIControllers on button click
 							+ SVerticalBox::Slot().AutoHeight().Padding(0.f, 8.f)
 								[
 									SNew(SButton)

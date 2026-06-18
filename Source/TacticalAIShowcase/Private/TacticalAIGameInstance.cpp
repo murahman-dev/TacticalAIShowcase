@@ -20,8 +20,3 @@ void UTacticalAIGameInstance::Init()
 			return ETeamAttitude::Hostile;
 		});
 }
-
-void UTacticalAIGameInstance::Shutdown()
-{
-	Super::Shutdown();
-}

@@ -12,7 +12,7 @@ class UAIDebugSettings;
 * Slate tuning panel for AI perception values.
 * Built by AAIDebugHUD, anchored to the bottom-right viewport corner.
 * Slider drag writes UAIDebugSettings::Pending* variables live.
-* ApplyToAllAI applies them on live AEnemyAIControllers on button click.
+* ApplyToAllAI pushes them into live AEnemyAIControllers on button click.
 * Settings/World held weakly so panel survives if either UObject is destroyed mid-session.
 */
 class TACTICALAISHOWCASE_API SAIDebugPanel : public SCompoundWidget

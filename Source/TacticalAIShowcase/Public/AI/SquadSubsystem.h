@@ -6,7 +6,7 @@
 #include "SquadSubsystem.generated.h"
 
 /*
-* World subsystem that tracks live AI pawns alongside their 
+* World subsystem that tracks live AI pawns alongside their
 * role, state, and current target.
 * Populated by AEnemyAIController OnPossess/OnUnPossess.
 * Read by BTDecorator_HasAllyEngaged and BTService_SetStateTag.
@@ -32,7 +32,7 @@ public:
 	// Returns the number of other allies in Engage or Flank state
 	int32 NumberOfEngagedAllies(APawn* Asker) const;
 
-	// Returns the target of the first other ally in 
+	// Returns the target of the first other ally in
 	// Engage state with a live target
 	AActor* MostEngagedTarget(APawn* Asker) const;
 
@@ -44,11 +44,11 @@ private:
 		TWeakObjectPtr<APawn> Pawn;
 
 		// AI.Role.* tag
-		FGameplayTag Role;                  
-		
+		FGameplayTag Role;
+
 		// AI.State.* tag
 		// Mirrored from BB by BTService_SetStateTag
-		FGameplayTag State; 
+		FGameplayTag State;
 
 		TWeakObjectPtr<AActor> Target;
 	};

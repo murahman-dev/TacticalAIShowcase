@@ -12,7 +12,7 @@ UCLASS()
 class TACTICALAISHOWCASE_API UBTTask_ClearKey : public UBTTaskNode
 {
 	GENERATED_BODY()
-	
+
 public:
 	// Constructor
 	UBTTask_ClearKey();
