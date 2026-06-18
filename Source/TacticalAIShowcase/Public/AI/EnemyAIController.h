@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "AIDebugSettings.h"
+#include "GameplayTagContainer.h"
 #include "EnemyAIController.generated.h"
 
 // Forward declarations to reduce compile dependencies
@@ -13,8 +15,10 @@ class UAISenseConfig_Damage;
 class UBehaviorTree;
 
 /*
-* AI Controller for enemy characters.
-* Handles perception (sight, hearing, damage) and AI behavior logic.
+* AI controller for enemy characters.
+* Owns perception (sight/hearing/damage), writes stimuli into the blackboard,
+* runs the assigned BT on possess, and registers with the squad subsystem.
+* Team 1 in IGenericTeamAgentInterface.
 */
 UCLASS()
 class TACTICALAISHOWCASE_API AEnemyAIController : public AAIController
@@ -25,17 +29,22 @@ public:
 	// Constructor
 	AEnemyAIController(const FObjectInitializer& Init);
 
-	/*
-	* Exposes the perception component for external systems
-	* Useful for debugging, behavior tree queries, or environment queries
-	*/
+	// Exposes the perception component for external systems (debug, BT, EQS contexts)
 	UAIPerceptionComponent* GetPerception() const { return PerceptionComp; }
 
-	/*
-	* Returns the team ID for this AI controller
-	* Team 1 = enemy, Team 0 = player, Team 255 = neutral
-	*/
+	// Applied at runtime when the tuner panel changes values
+	void ApplyDebugSettings(const UAIDebugSettings& DebugSettings);
+
+	// IGenericTeamAgentInterface team ID: 1 = enemy, 0 = player, 255 = neutral
 	virtual FGenericTeamId GetGenericTeamId() const override;
+
+	// Hostile for player-controlled pawns, friendly for other AI (perception affiliation filter)
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+
+	// Role assigned to this AI on possess
+	// Set per-subclass (Suppressor, Flanker, Closer)
+	UPROPERTY(EditDefaultsOnly, Category = "AI|Squad", meta = (Categories = "AI.Role"))
+	FGameplayTag DefaultRole;
 
 protected:
 	// Called when this controller takes possession of a pawn (enemy character)
@@ -44,11 +53,11 @@ protected:
 	// Called when this controller loses possession of a pawn
 	virtual void OnUnPossess() override;
 
-	// Behavior tree to run on possess (assigned in BP_MyAIController Class Defaults)
+	// Behavior tree to run on possess (set in the AIController BP class defaults)
 	UPROPERTY(EditDefaultsOnly, Category = "AI|Behavior")
 	TObjectPtr<UBehaviorTree> BehaviorTreeAsset;
 
-	// Core perception component that manages all AI senses
+	// Perception component that manages all AI senses
 	UPROPERTY(VisibleAnywhere, Category = "AI|Perception")
 	TObjectPtr<UAIPerceptionComponent> PerceptionComp;
 
@@ -56,11 +65,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "AI|Perception")
 	TObjectPtr<UAISenseConfig_Sight> SightConfig;
 
-	// Hearing configuration (noise detection radius, thresholds)
+	// Hearing configuration (noise detection radius, max age)
 	UPROPERTY(VisibleAnywhere, Category = "AI|Perception")
 	TObjectPtr<UAISenseConfig_Hearing> HearingConfig;
 
-	// Damage sense configuration (react to damage events)
+	// Damage sense configuration (max age for damage stimuli)
 	UPROPERTY(VisibleAnywhere, Category = "AI|Perception")
 	TObjectPtr<UAISenseConfig_Damage> DamageConfig;
 
@@ -80,19 +89,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "AI|Perception", meta = (ClampMin = "100", ClampMax = "4000"))
 	float HearingRadius = 1200.f;
 
-	/*
-	* Callback when AI perception system detects or updates a stimulus
-	* @param Actor - Actor that triggered the stimulus
-	* @param Stim - Stimulus data (type, strength, success state, etc.)
-	*/
+	// Called when a sense stimulus fires
+	// Updates BB target and last known location
 	UFUNCTION()
 	void OnTargetSensed(AActor* Actor, FAIStimulus Stim);
 
 private:
-	/*
-	* Applies configurable sense values(radius, FOV, age) to each sense config
-	* Called during construction before senses are registered with the perception component
-	* Safe to call only after SightConfig, HearingConfig, and DamageConfig are initialized
-	*/
+	// Applies configurable sense values (radius, FOV, age) to each sense config
+	// Called from the constructor before ConfigureSense
+	// Configs must be allocated first
 	void ApplyConfiguredSenseValues();
 };

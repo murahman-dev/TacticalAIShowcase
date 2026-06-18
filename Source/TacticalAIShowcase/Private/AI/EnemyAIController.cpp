@@ -9,24 +9,23 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AI/BlackboardKeys.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "AI/SquadSubsystem.h"
 
 AEnemyAIController::AEnemyAIController(const FObjectInitializer& Init) : Super(Init)
 {
-	// Enable ticking if needed for future extensions (currently not required)
+	// AI is event-driven (perception delegates + BT)
+	// AEnemyCharacter overrides GetActorEyesViewPoint so sight perception
+	// uses actor rotation directly and we don't need Tick
 	PrimaryActorTick.bCanEverTick = false;
 
-	// Create perception component (core AI sensing system)
 	PerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("Perception Component"));
-	
-	// Create individual sense configurations
+
 	SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("Sight Config"));
 	HearingConfig = CreateDefaultSubobject<UAISenseConfig_Hearing>(TEXT("Hearing Config"));
 	DamageConfig = CreateDefaultSubobject<UAISenseConfig_Damage>(TEXT("Damage Config"));
 
-	// Assign perception component to AI controller
 	SetPerceptionComponent(*PerceptionComp);
 
-	// Apply configurable values (radius, angles, etc.)
 	ApplyConfiguredSenseValues();
 
 	// Register senses with perception system
@@ -34,8 +33,25 @@ AEnemyAIController::AEnemyAIController(const FObjectInitializer& Init) : Super(I
 	PerceptionComp->ConfigureSense(*HearingConfig);
 	PerceptionComp->ConfigureSense(*DamageConfig);
 
-	// Set sight as the primary sense for decision-making
+	// Sight sense is dominant
+	// Perception promotes its data over hearing/damage
 	PerceptionComp->SetDominantSense(UAISense_Sight::StaticClass());
+}
+
+void AEnemyAIController::ApplyDebugSettings(const UAIDebugSettings& DebugSettings)
+{
+	if (!SightConfig || !HearingConfig || !DamageConfig)
+	{
+		return;
+	}
+
+	SightConfig->SightRadius = DebugSettings.PendingSightRange;
+	SightConfig->LoseSightRadius = DebugSettings.PendingLoseSightRange;
+	SightConfig->PeripheralVisionAngleDegrees = DebugSettings.PendingHalfFOVDegree;
+	HearingConfig->HearingRange = DebugSettings.PendingHearingRange;
+
+	// Tell perception to reapply sense configs after the field updates above
+	PerceptionComp->RequestStimuliListenerUpdate();
 }
 
 FGenericTeamId AEnemyAIController::GetGenericTeamId() const
@@ -44,28 +60,49 @@ FGenericTeamId AEnemyAIController::GetGenericTeamId() const
 	return FGenericTeamId(1);
 }
 
+ETeamAttitude::Type AEnemyAIController::GetTeamAttitudeTowards(const AActor& Other) const
+{
+	if (const APawn* OtherPawn = Cast<APawn>(&Other))
+	{
+		if (OtherPawn->IsPlayerControlled())
+		{
+			return ETeamAttitude::Hostile;
+		}
+		return ETeamAttitude::Friendly;
+	}
+	return ETeamAttitude::Neutral;
+}
+
 void AEnemyAIController::ApplyConfiguredSenseValues()
 {
-	// Ensure configurations are valid before applying values
-	if (!SightConfig || !HearingConfig || !DamageConfig) return;
+	// Skip if any config failed to allocate during CDO setup
+	if (!SightConfig || !HearingConfig || !DamageConfig)
+	{
+		return;
+	}
 
 	// Sight setup
 	SightConfig->SightRadius = SightRadius;
 	SightConfig->LoseSightRadius = LoseSightRadius;
 	SightConfig->PeripheralVisionAngleDegrees = PeripheralHalfAngleDeg;
 	SightConfig->SetMaxAge(8.f);
-	SightConfig->AutoSuccessRangeFromLastSeenLocation = 1.f;
+	SightConfig->AutoSuccessRangeFromLastSeenLocation = 1000.f;
+
+	// Detect only hostiles
 	SightConfig->DetectionByAffiliation.bDetectEnemies = true;
-	SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+	SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
 	SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
 
 	// Hearing setup
 	HearingConfig->HearingRange = HearingRadius;
 	HearingConfig->SetMaxAge(6.f);
-	HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
-	HearingConfig->DetectionByAffiliation.bDetectNeutrals = true;
 
-	// Damage sense setup (used for instant reactions)
+	// Detect only hostiles
+	HearingConfig->DetectionByAffiliation.bDetectEnemies = true;
+	HearingConfig->DetectionByAffiliation.bDetectNeutrals = false;
+	HearingConfig->DetectionByAffiliation.bDetectFriendlies = false;
+
+	// Damage stimuli persist 10s on the perception system
 	DamageConfig->SetMaxAge(10.f);
 }
 
@@ -73,8 +110,25 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	// Skip if no BT is assigned 
-	// Controller still runs perception below
+	// Bind perception after Super so PerceptionComp is alive
+	// Binding earlier can miss the first stimulus
+	if (PerceptionComp)
+	{
+		PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyAIController::OnTargetSensed);
+	}
+
+	// Register with squad before BT starts
+	// So a service's first SetState lands on an existing entry
+	if (UWorld* World = GetWorld())
+	{
+		if (USquadSubsystem* Squad = World->GetSubsystem<USquadSubsystem>())
+		{
+			Squad->RegisterAlly(InPawn, DefaultRole);
+		}
+	}
+
+	// Skip if no BT is assigned
+	// Controller still runs perception above
 	if (BehaviorTreeAsset)
 	{
 		// GetBlackboardComponent returns null on first possession
@@ -86,22 +140,17 @@ void AEnemyAIController::OnPossess(APawn* InPawn)
 			UseBlackboard(BehaviorTreeAsset->BlackboardAsset, BB);
 		}
 
-		// Creates the BehaviorTreeComponent and starts ticking the tree
-		RunBehaviorTree(BehaviorTreeAsset);
-
-		// Seed initial blackboard state from the pawn's spawn pose
+		// Seed BB before RunBehaviorTree so the first BT tick reads written values
 		if (BB)
 		{
 			BB->SetValueAsVector(BBKeys::HomeLocation, InPawn->GetActorLocation());
 			BB->SetValueAsBool(BBKeys::bSeesTarget, false);
+			BB->SetValueAsName(BBKeys::Role, DefaultRole.IsValid() ? DefaultRole.GetTagName() : NAME_None);
 		}
-	}
 
-	// Bind AFTER Super::OnPossess so PerceptionComp is alive
-	// Binding earlier can miss the first stimulus
-	if (PerceptionComp)
-	{
-		PerceptionComp->OnTargetPerceptionUpdated.AddDynamic(this, &AEnemyAIController::OnTargetSensed);
+		// Start BT after all dependencies are ready
+		// (BB seeds, squad entry, perception binding)
+		RunBehaviorTree(BehaviorTreeAsset);
 	}
 }
 
@@ -113,44 +162,59 @@ void AEnemyAIController::OnUnPossess()
 		PerceptionComp->OnTargetPerceptionUpdated.RemoveDynamic(this, &AEnemyAIController::OnTargetSensed);
 	}
 
+	if (UWorld* World = GetWorld())
+	{
+		if (USquadSubsystem* Squad = World->GetSubsystem<USquadSubsystem>())
+		{
+			if (APawn* AI_Pawn = GetPawn())
+			{
+				Squad->UnregisterAlly(AI_Pawn);
+			}
+		}
+	}
+
 	Super::OnUnPossess();
 }
 
 void AEnemyAIController::OnTargetSensed(AActor* Actor, FAIStimulus Stim)
 {
-	UE_LOG(LogTemp, Display, TEXT("Sensed : %s, Sense : %d, Sense Status : %d"), Actor ? *Actor->GetName() : TEXT("NONE"), Stim.Type.Index, Stim.WasSuccessfullySensed());
 	// Ignore invalid actors
-	if (!Actor) return;
-	
+	if (!Actor)
+	{
+		return;
+	}
+
 	UBlackboardComponent* BB = GetBlackboardComponent();
 
-	// Ensure blackboard exists
-	if (!BB) return;
-	
-	// Get ID for sight sense to distinguish perception types
+	// BB can be null during the unpossess gap between
+	// BB destruction and delegate unbind
+	if (!BB)
+	{
+		return;
+	}
+
+	// Sense ID compare is the standard branch pattern
+	// (Stim.Type is FAISenseID, not a class)
 	const FAISenseID SightID = UAISense::GetSenseID<UAISense_Sight>();
 
-	// Handle sight-specific logic
 	if (Stim.Type == SightID)
 	{
 		if (Stim.WasSuccessfullySensed())
 		{
-			// Target is visible
 			BB->SetValueAsObject(BBKeys::TargetActor, Actor);
 			BB->SetValueAsVector(BBKeys::LastKnownLocation, Stim.StimulusLocation);
 			BB->SetValueAsBool(BBKeys::bSeesTarget, true);
 		}
 		else
 		{
-			// Lost visual contact
 			BB->SetValueAsBool(BBKeys::bSeesTarget, false);
 		}
 	}
 
-	// Handle non-sight stimuli (hearing, damage, etc.)
+	// Hearing/damage: update LastKnownLocation on positive stimulus only
+	// Losses don't clear it (preserves last heard/hit position for investigation)
 	else if (Stim.WasSuccessfullySensed())
 	{
-		// Update last known position from sound/damage
 		BB->SetValueAsVector(BBKeys::LastKnownLocation, Stim.StimulusLocation);
 	}
 }
