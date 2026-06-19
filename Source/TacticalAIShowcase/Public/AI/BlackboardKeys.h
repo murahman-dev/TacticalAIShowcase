@@ -10,13 +10,13 @@
 */
 namespace BBKeys
 {
-	// Currently engaged target actor (Object key)
+	// Target actor reference, set on sight stimulus and held across loss (Object key)
 	extern const FName TargetActor;
 
 	// Last position target was seen or heard at (Vector key)
 	extern const FName LastKnownLocation;
 
-	// AI has direct line of sight this frame (Bool key)
+	// True while sight stimulus is active for TargetActor (Bool key)
 	extern const FName bSeesTarget;
 
 	// Alert state has completed its investigate move (Bool key)
@@ -31,8 +31,11 @@ namespace BBKeys
 	// Current state tag: Patrol, Alert, Engage, Flank, Retreat (Name key)
 	extern const FName CurrentState;
 
-	// Nav-valid patrol point chosen by BTTask_PickPatrolPoint (Vector key)
+	// Patrol destination written by BTTask_PickPatrolPoint (Vector key)
 	extern const FName PatrolDestination;
+
+	// Index for PatrolWaypoints, advanced per cycle with wraparound (Int key)
+	extern const FName CurrentPatrolIndex;
 
 	// Nav-valid flank position from EQS via BTTask_FindFlankPosition (Vector key)
 	extern const FName FlankPosition;
