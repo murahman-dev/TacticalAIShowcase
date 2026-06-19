@@ -9,14 +9,14 @@ class UBlackboardComponent;
 
 /*
 * Placeholder suppression task.
-* Holds position for Duration seconds and periodically draws 
+* Holds position for Duration seconds and periodically draws
 * a debug line at the target to visualize fire.
 */
 UCLASS()
 class TACTICALAISHOWCASE_API UBTTask_Suppress : public UBTTaskNode
 {
 	GENERATED_BODY()
-	
+
 public:
 	// Constructor
 	UBTTask_Suppress();
@@ -24,6 +24,10 @@ public:
 	// How long the AI suppresses before the task completes (seconds)
 	UPROPERTY(EditAnywhere, Category = "AI", meta = (ClampMin = "0.2", ClampMax = "5"))
 	float Duration = 1.5f;
+
+	// Yaw rotation rate while suppressing (RInterpTo speed)
+	UPROPERTY(EditAnywhere, Category = "AI", meta = (ClampMin = "0.5", ClampMax = "20.0"))
+	float RotationInterpSpeed = 5.f;
 
 protected:
 	// Called once when the task starts

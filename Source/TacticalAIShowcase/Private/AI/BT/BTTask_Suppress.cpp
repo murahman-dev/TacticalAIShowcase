@@ -2,6 +2,7 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "AI/BlackboardKeys.h"
+#include "Perception/AISense_Hearing.h"
 
 namespace
 {
@@ -57,23 +58,43 @@ void UBTTask_Suppress::TickTask(UBehaviorTreeComponent& Owner, uint8* NodeMemory
 
 	if (AActor* Target = Cast<AActor>(BB->GetValueAsObject(BBKeys::TargetActor)))
 	{
+		// Continuous facing keeps the perception cone tracking the target during suppression
+		// So the player can not quickly walk around the AI and slip out of cone permanently
+		const FVector ToTargetDir = (Target->GetActorLocation() - AI_Pawn->GetActorLocation()).GetSafeNormal2D();
+		if (!ToTargetDir.IsNearlyZero())
+		{
+			const FRotator TargetYaw(0.f, ToTargetDir.Rotation().Yaw, 0.f);
+			const FRotator NewRot = FMath::RInterpTo(AI_Pawn->GetActorRotation(), TargetYaw, DeltaSeconds, RotationInterpSpeed);
+			AI_Pawn->SetActorRotation(NewRot);
+		}
+
 		if (M->NextShot <= 0.f)
 		{
+			UWorld* World = AI_Pawn->GetWorld();
+
+			// Gunfire is a hearing stimulus for other AI
+			// Target as instigator so bDetectEnemies filter accepts it
+			UAISense_Hearing::ReportNoiseEvent(
+				World,
+				Target->GetActorLocation(),
+				1.5f,
+				Target,
+				0.f);
+
 #if !UE_BUILD_SHIPPING
 			// Chest-height debug line for placeholder fire visualization
 			DrawDebugLine(
-				GetWorld(),
+				World,
 				AI_Pawn->GetActorLocation() + FVector(0, 0, DebugLineChestHeight),
 				Target->GetActorLocation() + FVector(0, 0, DebugLineChestHeight),
 				FColor::Red,
 				false,
 				0.2f,
 				0,
-				1.5f
-			);
-#endif // !UE_BUILD_SHIPPING
+				1.5f);
+#endif
 
-			// 4 visualized shots per second
+			// 4 visualized shots per second at ShotInterval = 0.25
 			M->NextShot = ShotInterval;
 		}
 	}
