@@ -37,6 +37,10 @@ protected:
 	// OnQueryDone completes the task
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& Owner, uint8* NodeMemory) override;
 
+	// Reset CachedOwner
+	// OnQueryDone's IsValid guard absorbs the late callback
+	virtual EBTNodeResult::Type AbortTask(UBehaviorTreeComponent& Owner, uint8* NodeMemory) override;
+
 private:
 	// EQS callback fired when the query finishes
 	void OnQueryDone(TSharedPtr<FEnvQueryResult> Result);

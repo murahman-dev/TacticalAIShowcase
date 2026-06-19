@@ -38,6 +38,13 @@ EBTNodeResult::Type UBTTask_FindFlankPosition::ExecuteTask(UBehaviorTreeComponen
 	return EBTNodeResult::InProgress;
 }
 
+EBTNodeResult::Type UBTTask_FindFlankPosition::AbortTask(UBehaviorTreeComponent& Owner, uint8* NodeMemory)
+{
+	// IsValid guard in OnQueryDone absorbs the late callback
+	CachedOwner.Reset();
+	return EBTNodeResult::Aborted;
+}
+
 void UBTTask_FindFlankPosition::OnQueryDone(TSharedPtr<FEnvQueryResult> Result)
 {
 	UBehaviorTreeComponent* Owner = CachedOwner.Get();
@@ -48,7 +55,7 @@ void UBTTask_FindFlankPosition::OnQueryDone(TSharedPtr<FEnvQueryResult> Result)
 		return;
 	}
 
-	if (!Result.IsValid() || !Result->IsSuccessful())
+	if (!Result.IsValid() || !Result->IsSuccessful() || Result->Items.Num() == 0)
 	{
 		FinishLatentTask(*Owner, EBTNodeResult::Failed);
 		return;
