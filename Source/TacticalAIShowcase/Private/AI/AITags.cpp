@@ -12,7 +12,7 @@ namespace AITags
 	UE_DEFINE_GAMEPLAY_TAG(State_Flank, "AI.State.Flank");
 	UE_DEFINE_GAMEPLAY_TAG(State_Retreat, "AI.State.Retreat");
 
-	UE_DEFINE_GAMEPLAY_TAG(Role_Suppressor, "AI.Role.Supressor");
+	UE_DEFINE_GAMEPLAY_TAG(Role_Suppressor, "AI.Role.Suppressor");
 	UE_DEFINE_GAMEPLAY_TAG(Role_Flanker, "AI.Role.Flanker");
 	UE_DEFINE_GAMEPLAY_TAG(Role_Closer, "AI.Role.Closer");
 }
