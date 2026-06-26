@@ -40,6 +40,9 @@ namespace BBKeys
 	// Nav-valid flank position from EQS via BTTask_FindFlankPosition (Vector key)
 	extern const FName FlankPosition;
 
+	// Side waypoint reached before FlankPosition so the approach arcs (Vector key)
+	extern const FName FlankWaypoint;
+
 	// Pawn's health is below the retreat threshold (Bool key)
 	extern const FName LowHealth;
 }

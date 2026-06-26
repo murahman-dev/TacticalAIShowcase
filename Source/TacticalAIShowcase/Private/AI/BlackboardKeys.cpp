@@ -16,5 +16,6 @@ namespace BBKeys
 	const FName PatrolDestination = TEXT("PatrolDestination");
 	const FName CurrentPatrolIndex = TEXT("CurrentPatrolIndex");
 	const FName FlankPosition = TEXT("FlankPosition");
+	const FName FlankWaypoint = TEXT("FlankWaypoint");
 	const FName LowHealth = TEXT("LowHealth");
 }

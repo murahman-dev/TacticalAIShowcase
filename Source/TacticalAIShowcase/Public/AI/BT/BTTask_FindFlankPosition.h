@@ -31,6 +31,27 @@ public:
 	UPROPERTY(EditAnywhere, Category = "EQS")
 	FBlackboardKeySelector ResultKey;
 
+	// Side waypoint reached before ResultKey that makes the approach arc
+	// Editor dropdown filtered to Vector keys only
+	UPROPERTY(EditAnywhere, Category = "EQS")
+	FBlackboardKeySelector WaypointKey;
+
+	// Waypoint distance from the player
+	UPROPERTY(EditAnywhere, Category = "Flank", meta = (ClampMin = "0"))
+	float FlankRadius = 450.f;
+
+	// Arc angle off the player->flanker line toward the target side
+	UPROPERTY(EditAnywhere, Category = "Flank", meta = (ClampMin = "0", ClampMax = "170"))
+	float ApproachAngleDegrees = 75.f;
+
+	// New pick must be at least this far from the current flank to relocate
+	UPROPERTY(EditAnywhere, Category = "Flank", meta = (ClampMin = "0"))
+	float ReflankThreshold = 300.f;
+
+	// Player camera aim must be within this half-angle of the flanker to relocate
+	UPROPERTY(EditAnywhere, Category = "Flank", meta = (ClampMin = "0", ClampMax = "90"))
+	float FacingConeHalfAngleDegrees = 45.f;
+
 protected:
 	// Called when the task fires
 	// Submits the EQS query and returns InProgress
@@ -44,6 +65,9 @@ protected:
 private:
 	// EQS callback fired when the query finishes
 	void OnQueryDone(TSharedPtr<FEnvQueryResult> Result);
+
+	// Player camera aim points within the facing cone of the flanker
+	bool IsPlayerFacing(AActor* Player, APawn* Flanker) const;
 
 	// Holds the BT component across the async query window
 	// TWeakObjectPtr so the task survives the BT being destroyed mid-query
