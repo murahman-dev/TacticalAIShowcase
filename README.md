@@ -2,7 +2,7 @@
 
 ![Three enemies engaging the player. Green and red are in Engage state, blue is Flanking. Cyan sight cones and red Suppress lines are debug overlays.](Documentation/Screenshots/Encounter.png)
 
-A small playable encounter in Unreal Engine 5.7. Three enemy roles coordinate against the player through perception stimuli and a shared world subsystem. Built end-to-end in C++ on AI Perception, Behavior Trees, EQS, and World Subsystems.
+A small combat encounter in Unreal Engine 5.7. Three enemy roles coordinate against the player through perception stimuli and a shared world subsystem. Built end-to-end in C++ on AI Perception, Behavior Trees, EQS, and World Subsystems.
 
 Blueprint is used only for default values, the Behavior Tree graph asset, and Input Action bindings.
 
@@ -16,15 +16,15 @@ Three enemies in a room with a fixed role each. The player navigates around them
 
 **Closer**. Moves towards the player through NavMesh navigation, then fires on arrival.
 
-**Flanker**. Arcs around the player to a position scored by EQS, but only when an ally is already engaging (gated by the `HasAllyEngaged` decorator). Alone, falls back to a Direct Attack from its current position. The decorator's tick flips back to Flank the moment an ally enters Engage or Flank state.
+**Flanker**. Works around to a side position scored by EQS, but only when an ally is already engaging (gated by the `HasAllyEngaged` decorator). It reaches that position along an arc rather than a straight line, moving through a side waypoint first so it does not cut across the player's front. Once in place it holds, and relocates only when a new query lands meaningfully far from its current spot and the player turns to face it. Alone, it falls back to a Direct Attack from its current position, and returns to Flank when an ally enters Engage or Flank state.
 
 ## Systems
 
 **AI Perception**. Sight, hearing, and damage senses on every enemy. Sight uses `AutoSuccessRangeFromLastSeenLocation` so brief FOV slips don't drop the target. Hearing detects player footsteps emitted on a timer. Damage is wired but no system writes to it yet.
 
-**Squad coordination**. `USquadSubsystem` (a `UWorldSubsystem`) holds a flat array of registered allies with role tag, current state tag, and current target. AI controllers register in `OnPossess` and unregister in `OnUnPossess`. The `HasAllyEngaged` decorator polls the array and aborts the Flanker's lower-priority branch when the engaged count crosses 1.
+**Squad coordination**. `USquadSubsystem` (a `UWorldSubsystem`) holds a flat array of registered allies with role tag, current state tag, and current target. AI controllers register in `OnPossess` and unregister in `OnUnPossess`. The `HasAllyEngaged` decorator polls the array and aborts the Flanker's lower-priority branch when the engaged count crosses 1. It holds its value for a short commit delay before committing a change, so a count that briefly crosses the threshold as an ally loses and regains sight does not swing the Flanker between branches.
 
-**Behavior Tree**. State Selector at the top (Retreat, Engage, Alert, Patrol). Engage contains role dispatch. Three sibling branches gated by role tag (Suppressor, Closer, Flanker). The Flanker branch holds a sub-selector for the flank-or-fallback decision. Every attack branch terminates in `BTTask_Suppress`, the shared fire action used by all roles.
+**Behavior Tree**. State Selector at the top (Retreat, Engage, Alert, Patrol). Engage contains role dispatch. Three sibling branches gated by role tag (Suppressor, Closer, Flanker). The Flanker branch holds a sub-selector for the flank-or-fallback decision. Every attack branch terminates in `BTTask_Suppress`, the shared fire action used by all roles. Patrol runs BTTask_PickPatrolPoint. It walks each enemy's per-instance PatrolWaypoints (actor-local) in order with a wrapping CurrentPatrolIndex, and falls back to a random patrol around the enemy's home when none are set.
 
 ![Full Behavior Tree graph showing the state selector at the top, role dispatch under Engage, and the Flanker sub-selector with its Direct Attack fallback.](Documentation/Screenshots/BT.png)
 
@@ -77,7 +77,7 @@ Health and damage are placeholders. A real attribute system (GAS or otherwise) w
 
 No production audio, no animations beyond the default Mixamo BOT characters and simple locomotion, no real projectiles. Debug lines and timing beats stand in for what would be montages and VFX in a shipping version.
 
-Save and load pair enemies to snapshots by `TActorIterator` order, which is fragile to level edits. Stable per-actor identifiers would replace this in a shipping version.
+Save and load pair enemies to snapshots by `TActorIterator` order, which is stable within a session but not across level edits. Stable per-actor identifiers would replace this in a shipping version.
 
 ## License
 
